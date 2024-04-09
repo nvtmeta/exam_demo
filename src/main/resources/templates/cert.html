@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Cert list</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"
+            integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</head>
+<body>
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="p-3 card shadow-sm border-0 mb-3">
+                <!--   form -->
+                <div class="card shadow-none border-0 mb-3">
+                    <div class="card-header border-bottom border-warning border-2 bg-white">
+                        <h1 class="text-primary fs-5 font-normal">IT CERTIFICATION MANAGEMENT</h1>
+                    </div>
+                    <!--   check the form add or update to change th:action-->
+                    <form th:object="${certFormData}"
+                          th:action="@{${id != null  ? '/certs/update/' + id : '/certs'}}"
+                          method="post">
+                        <div class="container p-4">
+                            <div class="row gx-3">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">CertId *</label>
+                                    <input th:if="${id == null}" th:field="*{id}" type="text"
+                                           class="form-control form-control-sm"
+                                           placeholder="Id">
+                                    <input th:if="${id != null}" th:field="*{id}" type="text"
+                                           class="form-control form-control-sm  bg-light"
+                                           placeholder="Id" disabled>
+                                    <span class="text-danger" th:errors="*{id}"></span>
+                                </div>
+
+
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">Cost *</label>
+                                    <input th:field="*{cost}"
+                                           type="number" placeholder="Cost"
+                                           class="form-control form-control-sm"
+
+                                    />
+                                    <span class="text-danger" th:errors="*{cost}"></span>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">Certification Name *</label>
+                                    <input th:field="*{certName}" type="text" class="form-control form-control-sm"
+                                           placeholder="Certification Name">
+                                    <span class="text-danger" th:errors="*{certName}"></span>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">Category *</label>
+                                    <!--          We need get departmentId so we need that for init-->
+                                    <select th:value="*{categoryId}" th:field="*{categoryId}"
+                                            class="form-select form-select-sm">
+                                        <option value="">Select a category</option>
+                                        <option th:each="option : ${categoryData}"
+                                                th:value="${option.getValue()}"
+                                                th:text="${option.getLabel()}"
+                                                th:selected="${#strings.equalsIgnoreCase(option.getValue(), certFormData.categoryId)}"
+                                        >
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="col-md-12 d-flex gap-1 justify-content-end">
+                                    <button type="submit" class="btn btn-sm btn-primary">Save</button>
+                                    <button type="reset" class="btn btn-sm btn-danger">Reset</button>
+                                    <a th:href="@{/#}" data-bs-toggle="modal" data-bs-target="#exampleModal"
+                                       class="btn btn-sm btn-warning"
+                                    >Classify</a>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <!--          end      form -->
+                <p class="alert alert-success" th:if="${#strings.equals(param.success, 'update')}">
+                    Update cert success
+                </p>
+                <p class="alert alert-success" th:if="${#strings.equals(param.success, 'add')}">
+                    Add cert success
+                </p>
+                <p class="alert alert-success" th:if="${#strings.equals(param.success, 'delete')}">
+                    Delete cert success
+                </p>
+                <table class="table table-sm small table-bordered table align-middle mb-0">
+                    <tr class="table-warning ">
+                        <th>Id</th>
+                        <th>Certification Name</th>
+                        <th>Cost ($)</th>
+                        <th>Category</th>
+                        <th>Delete</th>
+                    </tr>
+                    <tr th:each="cert : ${certList}">
+                        <td>
+                            <a th:text="${cert.getId()}" th:href="@{/certs/update/{id}(id=${cert.getId()})}"
+                               class="text-primary text-decoration-none"
+                            ></a>
+                        </td>
+                        <td th:text="${cert.getCertName()}"></td>
+                        <td th:text="${cert.getCost()}"></td>
+                        <td th:text="${cert.getCategoryName()}"></td>
+                        <td>
+                            <!--                            <a-->
+                            <!--                                    th:attr="onclick=|deleteCert(${cert.getId()})|"-->
+                            <!--                                    href="javascript:void(0)" class="btn btn-sm btn-danger"></a>-->
+                            <!-- Delete button -->
+                            <a href="javascript:void(0)" class="text-primary text-decoration-none"
+                               data-bs-toggle="modal" data-bs-target="#deleteModal"
+                               th:data-cert-id="${cert.getId()}"
+                               th:data-cert-name="${cert.getCertName()}"
+                            >
+                                Delete
+                            </a>
+
+                            <!-- Modal -->
+                            <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="exampleModalLabel"
+                                 aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content ">
+                                        <div class="modal-header">
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                    aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <h5 class="modal-title" id="modalTitle"></h5>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <form id="deleteForm" method="get"
+                                                  th:action="@{/certs/delete/{id}(id=__CERT_ID__)}">
+                                                <button type="button" class="btn btn-primary" onclick="deleteCert()">Ok
+                                                </button>
+                                            </form>
+                                            <button type="button" class="btn border border-dark border-1"
+                                                    data-bs-dismiss="modal">
+                                                Cancel
+                                            </button>
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- classifyModal  -->
+
+                            <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel"
+                                 aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="exampleModalLabel">Certitifcation
+                                                management</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                    aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <p>Total of certificates by the category</p>
+                                            <table class="table">
+                                                <thead>
+                                                <tr>
+                                                    <th scope="col">#</th>
+                                                    <th scope="col">Category</th>
+                                                    <th scope="col">Total</th>
+                                                </tr>
+                                                </thead>
+                                                <tbody>
+                                                <tr th:each="category, iterStat : ${categoryData}">
+                                                    <td th:text="${iterStat.count}">1</td>
+                                                    <td th:text="${category.getLabel()}"></td>
+                                                    <td th:text="${category.getTotalCert()}"></td>
+                                                </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-dark" data-bs-dismiss="modal">Close
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+
+                <nav th:if="${certList != null}" class="mt-3" aria-label="Page navigation example">
+                    <ul class="pagination">
+                        <li th:if="${certList.getNumber() > 0}" class="page-item"><a
+                                class="page-link" th:href="@{/certs(
+                                                page=${certList.getNumber() -1})}">
+                            <
+                        </a>
+                        </li>
+                        <li class="page-item rounded-none"
+                            th:each="pageIndex: ${#numbers.sequence(1, certList.getTotalPages())}">
+                            <a th:classappend="${pageIndex - 1 == certList.getNumber() ? 'active page-link' : 'page-link'}"
+                               th:text="${pageIndex}"
+                               th:href="@{/certs(
+                                               page=${pageIndex - 1} )}">
+                            </a>
+                        </li>
+                        <li th:if="${certList.getNumber() < certList.getTotalPages() - 1}" class="page-item"><a
+                                class="page-link" th:href="@{/certs(
+                                                page=${certList.getNumber() +1} )}">
+                            >
+                        </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // JavaScript to set modal content based on cert name
+    $('#deleteModal').on('show.bs.modal', function (event) {
+        const button = $(event.relatedTarget);
+        const certName = button.data('cert-name');
+        const certId = button.data('cert-id');
+        const modal = $(this);
+        modal.find('.modal-title').text('Do you want to delete the record ?');
+        // Store the certId in a data attribute of the modal
+        modal.data('cert-id', certId);
+    });
+
+    function deleteCert() {
+        const certId = $('#deleteModal').data('cert-id');
+        // Make an AJAX request to delete the cert with the given ID
+        $.ajax({
+            url: '/certs/delete/' + certId,
+            type: 'GET',
+            success: function (response) {
+                // Handle success response (e.g., reload the page)
+                window.location.reload();
+            },
+            error: function (xhr, status, error) {
+                // Handle error response
+                console.error(xhr.responseText);
+            }
+        });
+    }
+</script>
+</body>
+</html>
